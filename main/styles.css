@@ -1,6 +1,14 @@
 @font-face {
     font-family: 'Pixelfont';
-    src: url('resources/pixelfont.ttf') format('truetype'); /* Adjust path if needed */
+    src: url('resources/pixelfont.ttf') format('truetype'); 
+}
+
+canvas {
+    display: block;
+    width: 1024px;
+    height: 576px;
+    image-rendering: pixelated;
+    border: 5px solid black;
 }
 
 body {

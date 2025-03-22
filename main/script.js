@@ -5,6 +5,9 @@ let startTime = Date.now();
 let endTime = startTime + timeLeft * 1000;
 let timerRunning = true;
 
+    // For animation
+let imagesLoaded = 0;
+
 
 // Pick a random element from an array
 Array.prototype.sample = function(){
@@ -153,25 +156,19 @@ function changeTime(seconds) {
     endTime = Date.now() + newTimeLeft * 1000; // Update the end time
 }
 
-// Get canvas and context
+// Set the main canvas
 const canvas = document.getElementById("main");
 const ctx = canvas.getContext("2d");
-
-// Set canvas size
 canvas.width = 1024;
 canvas.height = 576;
 
 // Load background image
 const bgimg = new Image();
 bgimg.src = "resources/mainbg.png";
-bgimg.onload = checkImagesLoaded; // Call function when loaded
 
-// Load sprite sheet
-const spriteSheet = new Image();
-spriteSheet.src = "resources/knightsprite/IDLE.png";
-spriteSheet.onload = checkImagesLoaded; // Call function when loaded
-
-let imagesLoaded = 0;
+// Load sprite sheets
+const knightSpriteSheet = new Image();
+knightSpriteSheet.src = "resources/knightsprite/IDLE.png";
 
 // Function to check when all images are loaded
 function checkImagesLoaded() {
@@ -181,6 +178,23 @@ function checkImagesLoaded() {
         gameLoop();
     }
 }
+
+bgimg.onload = checkImagesLoaded;
+
+// Create a scaled knight sprite sheet
+const scaledSpriteSheet = document.createElement("canvas");
+const scaledCtx = scaledSpriteSheet.getContext("2d");
+
+knightSpriteSheet.onload = function () {
+    const scaleFactor = 4;
+    scaledSpriteSheet.width = knightSpriteSheet.width * scaleFactor;
+    scaledSpriteSheet.height = knightSpriteSheet.height * scaleFactor;
+
+    scaledCtx.imageSmoothingEnabled = false;
+    scaledCtx.drawImage(knightSpriteSheet, 0, 0, scaledSpriteSheet.width, scaledSpriteSheet.height);
+
+    checkImagesLoaded(); // Now call checkImagesLoaded
+};
 
 // Sprite class
 class Sprite {
@@ -204,27 +218,30 @@ class Sprite {
         }
     }
 
-    draw(context) {
+    draw(context) { 
         context.drawImage(
             this.image,
-            this.frameIndex * this.width, 0, // Crop sprite frame
-            this.width, this.height,
+            this.frameIndex * (this.width * 4), 0, // Crop the correctly scaled frame
+            this.width * 4, this.height * 4, // Crop size
             this.x, this.y, // Position on canvas
-            this.width, this.height
+            this.width * 4, this.height * 4 // Draw size (scale applied)
         );
     }
+    
 }
 
+
 // Create the knight sprite
-const knightIdle = new Sprite(spriteSheet, 96, 84, 100, 100, 7, 10); 
+const knightIdle = new Sprite(scaledSpriteSheet, 96, 84, 90, 210, 7, 10); 
 
 // Game loop function
+
 function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-    ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height); // Draw background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height);
 
-    knightIdle.update(); // Update frame index
-    knightIdle.draw(ctx); // Draw the sprite
+    knightIdle.update();
+    knightIdle.draw(ctx);
 
-    requestAnimationFrame(gameLoop); // Repeat the loop
+    requestAnimationFrame(gameLoop); // Keep a smooth refresh rate
 }
