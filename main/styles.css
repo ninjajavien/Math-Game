@@ -1,7 +1,14 @@
+@font-face {
+    font-family: 'Pixelfont';
+    src: url('resources/pixelfont.ttf') format('truetype'); /* Adjust path if needed */
+}
+
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 50px;
-    background-color: #f4f4f4;
+    font-family: 'Pixelfont', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
