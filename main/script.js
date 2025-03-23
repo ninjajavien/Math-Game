@@ -7,6 +7,7 @@ let timerRunning = true;
 
     // For animation
 let imagesLoaded = 0;
+let knightIdle;
 
 
 // Pick a random element from an array
@@ -165,21 +166,24 @@ canvas.height = 576;
 // Load background image
 const bgimg = new Image();
 bgimg.src = "resources/mainbg.png";
+bgimg.onload = checkImagesLoaded;
+bgimg.onerror = () => console.error("Failed to load background image.");
 
 // Load sprite sheets
 const knightSpriteSheet = new Image();
 knightSpriteSheet.src = "resources/knightsprite/IDLE.png";
+knightSpriteSheet.onerror = () => console.error("Failed to load knight sprite.");
 
 // Function to check when all images are loaded
 function checkImagesLoaded() {
     imagesLoaded++;
+    console.log(`Images Loaded: ${imagesLoaded}/2`);
+    
     if (imagesLoaded === 2) {
         console.log("All images loaded. Starting game loop...");
         gameLoop();
     }
 }
-
-bgimg.onload = checkImagesLoaded;
 
 // Create a scaled knight sprite sheet
 const scaledSpriteSheet = document.createElement("canvas");
@@ -193,7 +197,10 @@ knightSpriteSheet.onload = function () {
     scaledCtx.imageSmoothingEnabled = false;
     scaledCtx.drawImage(knightSpriteSheet, 0, 0, scaledSpriteSheet.width, scaledSpriteSheet.height);
 
-    checkImagesLoaded(); // Now call checkImagesLoaded
+    // Now create knight sprite
+    knightIdle = new Sprite(scaledSpriteSheet, 96 * scaleFactor, 84 * scaleFactor, 90, 210, 7, 10);
+
+    checkImagesLoaded();
 };
 
 // Sprite class
@@ -221,21 +228,15 @@ class Sprite {
     draw(context) { 
         context.drawImage(
             this.image,
-            this.frameIndex * (this.width * 4), 0, // Crop the correctly scaled frame
-            this.width * 4, this.height * 4, // Crop size
-            this.x, this.y, // Position on canvas
-            this.width * 4, this.height * 4 // Draw size (scale applied)
+            this.frameIndex * this.width, 0,  // Crop the correct frame
+            this.width, this.height,          // Crop size
+            this.x, this.y,                   // Position on canvas
+            this.width, this.height            // Draw size (already scaled)
         );
     }
-    
 }
 
-
-// Create the knight sprite
-const knightIdle = new Sprite(scaledSpriteSheet, 96, 84, 90, 210, 7, 10); 
-
 // Game loop function
-
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height);
