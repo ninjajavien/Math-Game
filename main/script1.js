@@ -14,11 +14,14 @@ let points = 0;             // Keeps track of points for difficulty scaling
 const bgimg = new Image();
 bgimg.src = "resources/mainbg.png";
 
-// Sprite Manager Class
+// Create SpriteManager class that handles loading and scaling sprite sheets
 class SpriteManager {
     constructor() {
+        // Holds the sprite sheets by name
         this.sprites = {};
+        // Tracks the number of loaded images
         this.imagesLoaded = 0;
+        // Tracks the total number of images to be loaded
         this.totalImages = 0;
         this.onAllLoaded = null;
     }
@@ -189,7 +192,7 @@ function generateQuestion() {
     userInput = ""; // Reset user input
 }
 
-// Handling User Input
+// Only allow users to input numbers and backspace
 document.addEventListener("keydown", (event) => {
     if (event.key >= "0" && event.key <= "9") {
         userInput += event.key;
