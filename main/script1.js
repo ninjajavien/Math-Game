@@ -203,27 +203,113 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-// Check if the User's Answer is Correct
+let timeLeft = 45;  // Initialize timer
+
+// Function to draw the timer
+function drawTimer() {
+    ctx.fillStyle = "white";
+    ctx.font = "48px Pixelfont";
+    ctx.textAlign = "left";
+    ctx.fillText(`Time: ${timeLeft}s`, 50, 551);
+}
+
+// Countdown Timer
+setInterval(() => {
+    if (timeLeft > 0) {
+        timeLeft--;
+    }
+}, 1000);
+
+// Modify checkAnswer function
 function checkAnswer() {
     if (parseInt(userInput) === correctAnswer) {
-        points += 1;  // Increase difficulty over time
-        generateQuestion(); // Generate a new question
+        points += 1;
+        timeLeft = Math.min(timeLeft + 2, 45); // Increase by 2, but cap at 45
+        generateQuestion();
     } else {
         console.log("❌ Wrong. Try again.");
+        timeLeft = Math.max(timeLeft - 5, 0); // Decrease by 5, but prevent negative values
     }
 }
 
-// Game Loop
+// Function to draw the points counter
+function drawPoints() {
+    ctx.fillStyle = "white";
+    ctx.font = "48px Pixelfont";
+    ctx.textAlign = "right";
+    ctx.fillText(`Points: ${points}`, 974, 551);
+}
+
+let gameOver = false; // Track game over state
+
+// Function to draw "Game Over" and Play Again button
+function drawGameOverScreen() {
+    ctx.fillStyle = "white";
+    ctx.font = "64px Pixelfont";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over", canvas.width / 2, 200);
+
+    // Draw Play Again Button
+    ctx.fillStyle = "black";
+    ctx.fillRect(canvas.width / 2 - 150, 360, 300, 100); // Button rectangle
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(canvas.width / 2 - 150, 360, 300, 100); // Border
+
+    // Button Text
+    ctx.fillStyle = "white";
+    ctx.font = "48px Pixelfont";
+    ctx.fillText("Play Again", canvas.width / 2, 425);
+
+    // Button Text
+    ctx.fillStyle = "white";
+    ctx.font = "64px Pixelfont";
+    ctx.fillText(`Points: ${points}`, canvas.width / 2, 320);
+
+}
+
+// Function to reset the game
+function resetGame() {
+    points = 0;
+    timeLeft = 45;
+    gameOver = false;
+    generateQuestion();
+}
+
+// Add event listener to detect Play Again button clicks
+canvas.addEventListener("click", (event) => {
+    if (gameOver) {
+        let rect = { x: canvas.width / 2 - 150, y: 360, width: 300, height: 100 };
+        if (
+            event.offsetX >= rect.x &&
+            event.offsetX <= rect.x + rect.width &&
+            event.offsetY >= rect.y &&
+            event.offsetY <= rect.y + rect.height
+        ) {
+            resetGame();
+        }
+    }
+});
+
+// Modify gameLoop to include the game over screen
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height);
-    
-    knight.update();
-    knight.draw(ctx);
-    
-    ghost.update();
-    ghost.draw(ctx);
 
-    drawMathQuestion();
+    if (timeLeft <= 0) {
+        gameOver = true;
+        drawGameOverScreen();
+    } else {
+        knight.update();
+        knight.draw(ctx);
+
+        ghost.update();
+        ghost.draw(ctx);
+
+        drawMathQuestion();
+        drawTimer();
+        drawPoints();
+    }
+
     requestAnimationFrame(gameLoop);
 }
