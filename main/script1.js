@@ -79,7 +79,7 @@ class Sprite {
             this.frames = this.spriteData[name].frames;
             this.image = this.spriteData[name].image;
         }
-    }
+    }    
 
     update() {
         this.tickCount++;
@@ -106,16 +106,21 @@ const spriteManager = new SpriteManager();
 // Load knight and ghost sprites
 spriteManager.loadSprite("knight_idle", "resources/knightsprite/IDLE.png");
 spriteManager.loadSprite("ghost_idle", "resources/ghostsprite/FLYING.png");
+spriteManager.loadSprite("knight_attack", "resources/knightsprite/ATTACK 3.png");
+spriteManager.loadSprite("knight_hurt", "resources/knightsprite/HURT.png");
+
 
 // Start the game loop after all sprites load
 spriteManager.onAllLoaded = () => {
     knight = new Sprite(spriteManager, {
-        idle: { image: spriteManager.sprites["knight_idle"], frames: 7 }  
-    }, 96, 84, 90, 210, 10);
-
+        idle: { image: spriteManager.sprites["knight_idle"], frames: 7 },
+        attack: { image: spriteManager.sprites["knight_attack"], frames: 6 },
+        hurt: { image: spriteManager.sprites["knight_hurt"], frames: 4 }
+    }, 96, 84, 90, 210, 15);
+    
     ghost = new Sprite(spriteManager, {
         idle: { image: spriteManager.sprites["ghost_idle"], frames: 4 }  
-    }, 81, 71, 550, 160, 15);
+    }, 81, 71, 550, 160, 20);
 
     generateQuestion();  // Generate first math question
     gameLoop();
@@ -224,13 +229,23 @@ setInterval(() => {
 function checkAnswer() {
     if (parseInt(userInput) === correctAnswer) {
         points += 1;
-        timeLeft = Math.min(timeLeft + 2, 45); // Increase by 2, but cap at 45
+        timeLeft = Math.min(timeLeft + 2, 45);
+        knight.setAnimation("attack");
+
+        // Return to idle after the attack animation finishes
+        setTimeout(() => knight.setAnimation("idle"), 600);
+        
         generateQuestion();
     } else {
         console.log("❌ Wrong. Try again.");
-        timeLeft = Math.max(timeLeft - 5, 0); // Decrease by 5, but prevent negative values
+        timeLeft = Math.max(timeLeft - 5, 0);
+        knight.setAnimation("hurt");
+
+        // Return to idle after the hurt animation finishes
+        setTimeout(() => knight.setAnimation("idle"), 400);
     }
 }
+
 
 // Function to draw the points counter
 function drawPoints() {
@@ -276,27 +291,36 @@ function resetGame() {
     generateQuestion();
 }
 
-// Add event listener to detect Play Again button clicks
-canvas.addEventListener("click", (event) => {
-    if (gameOver) {
-        let rect = { x: canvas.width / 2 - 150, y: 360, width: 300, height: 100 };
-        if (
-            event.offsetX >= rect.x &&
-            event.offsetX <= rect.x + rect.width &&
-            event.offsetY >= rect.y &&
-            event.offsetY <= rect.y + rect.height
-        ) {
-            resetGame();
-        }
-    }
-});
+let gameStarted = false; // Track if the game has started
 
-// Modify gameLoop to include the game over screen
+// Function to draw the start screen
+function drawStartScreen() {
+    ctx.fillStyle = "white";
+    ctx.font = "64px Pixelfont";
+    ctx.textAlign = "center";
+    ctx.fillText("Math Dungeon", canvas.width / 2, 200);
+
+    // Draw Start Game Button
+    ctx.fillStyle = "black";
+    ctx.fillRect(canvas.width / 2 - 150, 300, 300, 100);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(canvas.width / 2 - 150, 300, 300, 100);
+
+    // Button Text
+    ctx.fillStyle = "white";
+    ctx.font = "48px Pixelfont";
+    ctx.fillText("Start Game", canvas.width / 2, 365);
+}
+
+// Modify gameLoop to include the start screen
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height);
 
-    if (timeLeft <= 0) {
+    if (!gameStarted) {
+        drawStartScreen(); // Show start screen if game hasn't started
+    } else if (timeLeft <= 0) {
         gameOver = true;
         drawGameOverScreen();
     } else {
@@ -313,3 +337,36 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
+
+// Modify event listener to detect "Start Game" and "Play Again" button clicks
+canvas.addEventListener("click", (event) => {
+    let startButton = { x: canvas.width / 2 - 150, y: 300, width: 300, height: 100 };
+    let playAgainButton = { x: canvas.width / 2 - 150, y: 360, width: 300, height: 100 };
+
+    if (!gameStarted) {
+        // If clicking on Start Game button, begin the game
+        if (
+            event.offsetX >= startButton.x &&
+            event.offsetX <= startButton.x + startButton.width &&
+            event.offsetY >= startButton.y &&
+            event.offsetY <= startButton.y + startButton.height
+        ) {
+            gameStarted = true;
+            timeLeft = 45; // Start the timer
+            generateQuestion();
+        }
+    } else if (gameOver) {
+        // If clicking on Play Again button, reset the game
+        if (
+            event.offsetX >= playAgainButton.x &&
+            event.offsetX <= playAgainButton.x + playAgainButton.width &&
+            event.offsetY >= playAgainButton.y &&
+            event.offsetY <= playAgainButton.y + playAgainButton.height
+        ) {
+            resetGame();
+        }
+    }
+});
+
+// Delay game start until the user clicks "Start Game"
+gameLoop();
