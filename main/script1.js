@@ -4,11 +4,13 @@ const ctx = canvas.getContext("2d");
 canvas.width = 1024;
 canvas.height = 576;
 
-let knight, ghost; // Declare characters
-let currentQuestion = "";  // Stores the math question
-let correctAnswer = 0;      // Stores the answer
-let userInput = "";         // Stores the user's answer
-let points = 0;             // Keeps track of points for difficulty scaling
+// Initialize variables
+let knight, ghost; 
+let currentQuestion = "";  
+let correctAnswer = 0;      
+let userInput = "";        
+let points = 0;  
+let timeLeft = 45; 
 
 // Load background image
 const bgimg = new Image();
@@ -17,7 +19,7 @@ bgimg.src = "resources/mainbg.png";
 // Create SpriteManager class that handles loading and scaling sprite sheets
 class SpriteManager {
     constructor() {
-        // Holds the sprite sheets by name
+        // Holds the sprite sheets
         this.sprites = {};
         // Tracks the number of loaded images
         this.imagesLoaded = 0;
@@ -125,32 +127,35 @@ spriteManager.onAllLoaded = () => {
         hurt: { image: spriteManager.sprites["ghost_hurt"], frames: 4 }
     }, 81, 71, 550, 160, 20);
 
-    generateQuestion();  // Generate first math question
+    generateQuestion();  
     gameLoop();
 };
 
-// Function to Draw the Math Question & User Input on the Canvas
+// Function to draw the math question and user input on the canvas
 function drawMathQuestion() {
     ctx.fillStyle = "white";
     ctx.font = "64px Pixelfont";
     ctx.textAlign = "center";
     
-    // Display question at the top
+    // Display question
     ctx.fillText(currentQuestion, canvas.width / 2, 200);
     
-    // Display user's input below the question
+    // Display user's input 
     ctx.fillText(userInput, canvas.width / 2, 550);
 }
 
-// Function to Determine the Type of Question
+// Function to get the difficulty level and the corresponding probability
 function getType() {
+    // Increase difficulty every 5 points
     let factor = Math.floor(points / 5);
-    let probability = Math.max(0.15, 0.90 - factor * 0.15);
+    /* Decrease the probability of getting an addition or subtraction
+     question by 5% for each difficulty increase */
+    let probability = Math.max(0.15, 0.40 - factor * 0.05);
     let type = 1 + factor;
     return [probability, type];
 }
 
-// Get the Operator Based on Type
+// Function to get an operator based on the probability given
 function getOperator(probability) {
     let rand = Math.random();
     if (rand < probability) return '+';
@@ -159,17 +164,19 @@ function getOperator(probability) {
     return '/';
 }
 
-// Get a Random Number Based on Difficulty
+// Function to get a random number based on the difficulty
 function getNumber(type) {
-    let numbers = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    let numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    // Remove smaller numbers and add larger numbers as difficulty increases
     for (let i = 0; i < type; i++) {
         numbers.shift();
-        numbers.push(13 + i);
+        numbers.push(12 + i);
     }
+    // Select and return a random number from the array
     return numbers[Math.floor(Math.random() * numbers.length)];
 }
 
-// Generate Math Question
+// Function to generate the math question
 function generateQuestion() {
     let arrayType = getType();
     let probability = arrayType[0];
@@ -180,10 +187,12 @@ function generateQuestion() {
     let num2 = getNumber(type);
 
     if (operator === '-') {
+        // Ensure than the answer is not negative
         if (num1 < num2) [num1, num2] = [num2, num1];
         correctAnswer = num1 - num2;
         currentQuestion = `${num1} - ${num2} = ?`;
     } else if (operator === '/') {
+        // Use num3 to avoid numbers getting too large
         let num3 = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12][Math.floor(Math.random() * 10)];
         num1 = num1 * num3;
         correctAnswer = num1 / num3;
@@ -197,21 +206,9 @@ function generateQuestion() {
         currentQuestion = `${num1} + ${num2} = ?`;
     }
 
-    userInput = ""; // Reset user input
+    // Reset user input
+    userInput = ""; 
 }
-
-// Only allow users to input numbers and backspace
-document.addEventListener("keydown", (event) => {
-    if (event.key >= "0" && event.key <= "9") {
-        userInput += event.key;
-    } else if (event.key === "Backspace") {
-        userInput = userInput.slice(0, -1);
-    } else if (event.key === "Enter") {
-        checkAnswer();
-    }
-});
-
-let timeLeft = 45;  // Initialize timer
 
 // Function to draw the timer
 function drawTimer() {
@@ -228,21 +225,26 @@ setInterval(() => {
     }
 }, 1000);
 
-// Modify checkAnswer function
+// Function to check answer
 function checkAnswer() {
     if (parseInt(userInput) === correctAnswer) {
         points += 1;
+        /* If answer is correct, increase time left by 2 seconds and 
+        play animations for both knight and ghost */
         timeLeft = Math.min(timeLeft + 2, 45);
         knight.setAnimation("attack");
         ghost.setAnimation("hurt");
 
-        // Return to idle after the attack animation finishes
+        // Return to idle after the animations finish
         setTimeout(() => knight.setAnimation("idle"), 600);
-        setTimeout(() => ghost.setAnimation("idle"), 600);
+        setTimeout(() => ghost.setAnimation("idle"), 400);
         
+        // Create a new question
         generateQuestion();
+
     } else {
-        console.log("❌ Wrong. Try again.");
+        /* If answer is incorrect, decrease time left by 5 seconds and 
+        play animations for both knight and ghost */
         timeLeft = Math.max(timeLeft - 5, 0);
         knight.setAnimation("hurt");
         ghost.setAnimation("attack");
@@ -262,10 +264,9 @@ function drawPoints() {
     ctx.fillText(`Points: ${points}`, 974, 551);
 }
 
-let gameOver = false; // Track game over state
-
-// Function to draw "Game Over" and Play Again button
+// Function to draw game over screen
 function drawGameOverScreen() {
+    // Draw "Game Over" text
     ctx.fillStyle = "white";
     ctx.font = "64px Pixelfont";
     ctx.textAlign = "center";
@@ -273,17 +274,17 @@ function drawGameOverScreen() {
 
     // Draw Play Again Button
     ctx.fillStyle = "black";
-    ctx.fillRect(canvas.width / 2 - 150, 360, 300, 100); // Button rectangle
+    ctx.fillRect(canvas.width / 2 - 150, 360, 300, 100); 
     ctx.strokeStyle = "white";
     ctx.lineWidth = 4;
-    ctx.strokeRect(canvas.width / 2 - 150, 360, 300, 100); // Border
+    ctx.strokeRect(canvas.width / 2 - 150, 360, 300, 100); 
 
-    // Button Text
+    // Draw "Play Again" text in the middle of button
     ctx.fillStyle = "white";
     ctx.font = "48px Pixelfont";
     ctx.fillText("Play Again", canvas.width / 2, 425);
 
-    // Button Text
+    // Draw final points
     ctx.fillStyle = "white";
     ctx.font = "64px Pixelfont";
     ctx.fillText(`Points: ${points}`, canvas.width / 2, 320);
@@ -296,9 +297,7 @@ function resetGame() {
     timeLeft = 45;
     gameOver = false;
     generateQuestion();
-}
-
-let gameStarted = false; // Track if the game has started
+} 
 
 // Function to draw the start screen
 function drawStartScreen() {
@@ -314,26 +313,31 @@ function drawStartScreen() {
     ctx.lineWidth = 4;
     ctx.strokeRect(canvas.width / 2 - 150, 300, 300, 100);
 
-    // Button Text
+    // Draw "Start Game" text in the middle of button
     ctx.fillStyle = "white";
     ctx.font = "48px Pixelfont";
     ctx.fillText("Start Game", canvas.width / 2, 365);
 }
 
-// Modify gameLoop to include the start screen
+// Function to loop the game
 function gameLoop() {
+    /* Clear the canvas so that the sprites, question, timer and
+    points will not overlap with their previous frames */
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bgimg, 0, 0, canvas.width, canvas.height);
 
+     // Show start screen if game hasn't started
     if (!gameStarted) {
-        drawStartScreen(); // Show start screen if game hasn't started
+        drawStartScreen();
+
+    // End the game and display the game-over screen once time runs out
     } else if (timeLeft <= 0) {
         gameOver = true;
         drawGameOverScreen();
     } else {
+        // Update and draw characters when the game is running
         knight.update();
         knight.draw(ctx);
-
         ghost.update();
         ghost.draw(ctx);
 
@@ -345,7 +349,18 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Modify event listener to detect "Start Game" and "Play Again" button clicks
+// Only allow users to input numbers and backspace
+document.addEventListener("keydown", (event) => {
+    if (event.key >= "0" && event.key <= "9") {
+        userInput += event.key;
+    } else if (event.key === "Backspace") {
+        userInput = userInput.slice(0, -1);
+    } else if (event.key === "Enter") {
+        checkAnswer();
+    }
+});
+
+// Add event listener to detect "Start Game" and "Play Again" button clicks
 canvas.addEventListener("click", (event) => {
     let startButton = { x: canvas.width / 2 - 150, y: 300, width: 300, height: 100 };
     let playAgainButton = { x: canvas.width / 2 - 150, y: 360, width: 300, height: 100 };
@@ -363,7 +378,7 @@ canvas.addEventListener("click", (event) => {
             generateQuestion();
         }
     } else if (gameOver) {
-        // If clicking on Play Again button, reset the game
+        // Reset the game if "Play Again" button is clicked
         if (
             event.offsetX >= playAgainButton.x &&
             event.offsetX <= playAgainButton.x + playAgainButton.width &&
@@ -376,4 +391,6 @@ canvas.addEventListener("click", (event) => {
 });
 
 // Delay game start until the user clicks "Start Game"
+let gameStarted = false;
+let gameOver = false;
 gameLoop();
