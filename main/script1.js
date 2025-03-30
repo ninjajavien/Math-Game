@@ -105,10 +105,11 @@ const spriteManager = new SpriteManager();
 
 // Load knight and ghost sprites
 spriteManager.loadSprite("knight_idle", "resources/knightsprite/IDLE.png");
-spriteManager.loadSprite("ghost_idle", "resources/ghostsprite/FLYING.png");
 spriteManager.loadSprite("knight_attack", "resources/knightsprite/ATTACK 3.png");
 spriteManager.loadSprite("knight_hurt", "resources/knightsprite/HURT.png");
-
+spriteManager.loadSprite("ghost_idle", "resources/ghostsprite/FLYING.png");
+spriteManager.loadSprite("ghost_attack", "resources/ghostsprite/ATTACK.png");
+spriteManager.loadSprite("ghost_hurt", "resources/ghostsprite/HURT.png");
 
 // Start the game loop after all sprites load
 spriteManager.onAllLoaded = () => {
@@ -119,7 +120,9 @@ spriteManager.onAllLoaded = () => {
     }, 96, 84, 90, 210, 15);
     
     ghost = new Sprite(spriteManager, {
-        idle: { image: spriteManager.sprites["ghost_idle"], frames: 4 }  
+        idle: { image: spriteManager.sprites["ghost_idle"], frames: 4 },  
+        attack: { image: spriteManager.sprites["ghost_attack"], frames: 8 },
+        hurt: { image: spriteManager.sprites["ghost_hurt"], frames: 4 }
     }, 81, 71, 550, 160, 20);
 
     generateQuestion();  // Generate first math question
@@ -231,18 +234,22 @@ function checkAnswer() {
         points += 1;
         timeLeft = Math.min(timeLeft + 2, 45);
         knight.setAnimation("attack");
+        ghost.setAnimation("hurt");
 
         // Return to idle after the attack animation finishes
         setTimeout(() => knight.setAnimation("idle"), 600);
+        setTimeout(() => ghost.setAnimation("idle"), 600);
         
         generateQuestion();
     } else {
         console.log("❌ Wrong. Try again.");
         timeLeft = Math.max(timeLeft - 5, 0);
         knight.setAnimation("hurt");
+        ghost.setAnimation("attack");
 
         // Return to idle after the hurt animation finishes
         setTimeout(() => knight.setAnimation("idle"), 400);
+        setTimeout(() => ghost.setAnimation("idle"), 800);
     }
 }
 
