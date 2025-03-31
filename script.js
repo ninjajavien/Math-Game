@@ -350,8 +350,12 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Only allow users to input numbers and backspace
+
 document.addEventListener("keydown", (event) => {
+    // Disable user input after game is over
+    if (gameOver) return; 
+
+    // Only allow users to input numbers and backspace
     if (event.key >= "0" && event.key <= "9") {
         userInput += event.key;
     } else if (event.key === "Backspace") {
