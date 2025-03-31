@@ -375,7 +375,8 @@ canvas.addEventListener("click", (event) => {
             event.offsetY <= startButton.y + startButton.height
         ) {
             gameStarted = true;
-            timeLeft = 45; // Start the timer
+            // Start the timer
+            timeLeft = 45; 
             generateQuestion();
         }
     } else if (gameOver) {
