@@ -149,8 +149,9 @@ function getType() {
     // Increase difficulty every 5 points
     let factor = Math.floor(points / 5);
     /* Decrease the probability of getting an addition or subtraction
-     question by 5% for each difficulty increase */
-    let probability = Math.max(0.15, 0.40 - factor * 0.05);
+     question by 5% for each difficulty increase. Minimum probability
+     of getting an addition question is 7.5% */
+    let probability = Math.max(0.075, 0.40 - factor * 0.05);
     let type = 1 + factor;
     return [probability, type];
 }
@@ -349,7 +350,6 @@ function gameLoop() {
     // Call the function gameLoop so that it will run repeatedly
     requestAnimationFrame(gameLoop);
 }
-
 
 document.addEventListener("keydown", (event) => {
     // Disable user input after game is over
